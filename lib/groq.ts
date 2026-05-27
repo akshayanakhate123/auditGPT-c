@@ -1,7 +1,7 @@
-import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AuditOutputSchema, AuditOutput, SYSTEM_PROMPT } from "./rubric";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export type DataAvailability = {
   pdp_health: "HAS_DATA" | "NO_DATA";
@@ -106,23 +106,22 @@ function buildUserPrompt(input: AuditInput): string {
 }
 
 export async function generateAudit(input: AuditInput): Promise<AuditOutput> {
-  const systemPrompt = buildSystemPrompt();
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction: buildSystemPrompt(),
+  });
 
   const attempt = async (): Promise<AuditOutput> => {
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.3,
-      max_tokens: 6000,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: buildUserPrompt(input) },
-      ],
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: buildUserPrompt(input) }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.3,
+        maxOutputTokens: 16000,
+      },
     });
-
-    const raw = completion.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(raw);
-    return AuditOutputSchema.parse(parsed);
+    const raw = result.response.text();
+    return AuditOutputSchema.parse(JSON.parse(raw));
   };
 
   try {
