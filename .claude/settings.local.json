@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5001)",
+      "Bash(taskkill /PID 8688 /F)",
+      "Bash(npm run *)",
+      "Bash(node -e ' *)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const z = require\\('zod'\\); console.log\\(z.ZodError ? 'v3' : 'v4 or different'\\); const s = z.z ? z.z : z; console.log\\(typeof s.object\\)\")",
+      "Bash(node -e \"const pkg = require\\('./node_modules/zod/package.json'\\); console.log\\(pkg.version\\)\")",
+      "Bash(node -e \"const { z } = require\\('zod'\\); const s = z.object\\({x: z.string\\(\\)}\\); const r = s.safeParse\\({}\\); console.log\\(JSON.stringify\\(r.error?.flatten ? r.error.flatten\\(\\) : r.error?.format\\(\\)\\)\\)\")",
+      "Bash(node -e \"const pkg = require\\('./node_modules/groq-sdk/package.json'\\); console.log\\(pkg.version\\); const { default: Groq } = require\\('./node_modules/groq-sdk/index.js'\\); console.log\\(typeof Groq\\)\")",
+      "Bash(Select-Object -First 1 OwningProcess)",
+      "Bash(node -e \"const pkg = require\\('./node_modules/@react-pdf/renderer/package.json'\\); console.log\\(pkg.version\\); console.log\\(Object.keys\\(pkg.exports || {}\\).slice\\(0,5\\)\\)\")",
+      "Bash(node -e \"const r = require\\('@react-pdf/renderer'\\); console.log\\(Object.keys\\(r\\).filter\\(k => !k.startsWith\\('_'\\)\\).join\\(', '\\)\\)\")",
+      "PowerShell(Get-NetTCPConnection *)"
+    ]
+  }
+}
