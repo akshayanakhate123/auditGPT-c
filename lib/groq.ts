@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { AuditOutputSchema, AuditOutput, SYSTEM_PROMPT } from "./rubric";
+import { AuditOutputSchema, AuditOutput, SYSTEM_PROMPT, DimensionSchema, DimensionOutput, SINGLE_DIMENSION_PROMPT } from "./rubric";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -107,7 +107,7 @@ function buildUserPrompt(input: AuditInput): string {
 
 export async function generateAudit(input: AuditInput): Promise<AuditOutput> {
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-flash-latest",
     systemInstruction: buildSystemPrompt(),
   });
 
@@ -126,7 +126,79 @@ export async function generateAudit(input: AuditInput): Promise<AuditOutput> {
 
   try {
     return await attempt();
-  } catch {
+  } catch (err: any) {
+    try {
+      return await attempt();
+    } catch (e2: any) {
+      console.error(`generateAudit failed:`, e2.issues || e2.message);
+      throw e2;
+    }
+  }
+}
+
+function buildDimensionUserPrompt(input: AuditInput, dimensionName: string): string {
+  const da = input.dataAvailability;
+  let status = "NO_DATA";
+  if (dimensionName === "creative") status = da.creative;
+  if (dimensionName === "social") status = da.social;
+
+  const availabilityBlock = [
+    "DATA AVAILABILITY:",
+    `- ${dimensionName.toUpperCase()}: ${status}`,
+    "",
+    "If HAS_DATA, analyze the content provided below.",
+    "If NO_DATA, follow the NO_DATA output rules exactly. Do not infer, estimate, or guess."
+  ].join("\n");
+
+  const lines: string[] = [
+    availabilityBlock,
+    "",
+    `Brand name: ${input.brandName}`,
+    `Brand website: ${input.brandUrl}`,
+    `Category: ${input.category}`,
+  ];
+
+  if (input.metaAdLibraryUrl) lines.push(`Meta Ad Library URL: ${input.metaAdLibraryUrl}`);
+  if (input.instagramHandle) lines.push(`Instagram handle: @${input.instagramHandle.replace("@", "")}`);
+
+  if (input.scrapedContext) {
+    lines.push("", "SCRAPED CONTENT:", input.scrapedContext);
+  }
+
+  lines.push(`\nGenerate the JSON output for the ${dimensionName} dimension.`);
+  return lines.join("\n");
+}
+
+export async function generateDimension(input: AuditInput, dimensionName: "creative" | "social"): Promise<DimensionOutput> {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-flash-latest",
+    systemInstruction: SINGLE_DIMENSION_PROMPT.replace(
+      "\nJSON STRUCTURE:\n",
+      `\n${ANTI_HALLUCINATION_RULES}\n\nJSON STRUCTURE:\n`
+    ),
+  });
+
+  const attempt = async (): Promise<DimensionOutput> => {
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: buildDimensionUserPrompt(input, dimensionName) }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.3,
+        maxOutputTokens: 2000,
+      },
+    });
+    const raw = result.response.text();
+    return DimensionSchema.parse(JSON.parse(raw));
+  };
+
+  try {
     return await attempt();
+  } catch (err: any) {
+    try {
+      return await attempt();
+    } catch (e2: any) {
+      console.error(`generateDimension failed for ${dimensionName}:`, e2.issues || e2.message);
+      throw e2;
+    }
   }
 }

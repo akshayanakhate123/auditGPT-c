@@ -60,6 +60,12 @@ export async function POST(
     seo: websiteSources.seo ?? "NO_DATA",
   };
 
+  const raw_contexts = {
+    website: (websiteSection as any).raw_context ?? null,
+    meta: (metaSection as any)?.raw_context ?? null,
+    instagram: (igSection as any)?.raw_context ?? null,
+  };
+
   const brandHealthScore = computeBrandHealth([
     base.pdp.score,
     creative.score,
@@ -92,6 +98,7 @@ export async function POST(
       saved: false,
     })),
     data_sources,
+    raw_contexts,
   };
 
   await supabase

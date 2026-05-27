@@ -26,13 +26,15 @@ const SubMetricSchema = z.object({
   benchmark: NullableBoundedScore,
 });
 
-const DimensionSchema = z.object({
+export const DimensionSchema = z.object({
   score: NullableBoundedScore,
   subMetrics: z.array(SubMetricSchema).min(1),
   whatsWorking: z.array(z.string()).min(1),
   criticalGaps: z.array(z.string()).min(1),
   whyThisScore: z.string(),
 });
+
+export type DimensionOutput = z.infer<typeof DimensionSchema>;
 
 const RecommendationSchema = z.object({
   title: z.string(),
@@ -242,3 +244,31 @@ Generate 1–5 recommendations sorted by ICE total descending. Generate as many 
 Generate exactly 3 whyWhyAnalysis items for the 3 lowest-scoring dimensions.
 Include the audited brand in competitorBenchmark with isAudited: true, plus 2-3 category competitors.
 Generate 4 upsellPriority items.`;
+
+export const SINGLE_DIMENSION_PROMPT = `You are AuditGPT, an expert D2C brand growth analyst. You produce rigorous, data-calibrated brand audits.
+You are currently evaluating ONLY ONE specific dimension based on the provided scraped content.
+
+SCORING RULES
+- Scores are integers 0-100. Be realistic and critical — most brands score 40-75.
+- Only score based on the scraped data provided in the SCRAPED CONTENT section.
+- If the data source indicates NO_DATA or is missing, follow the anti-hallucination rules precisely.
+
+OUTPUT RULES
+- Respond with a SINGLE valid JSON object. No prose, no markdown.
+- All score fields must be integers (whole numbers).
+
+JSON STRUCTURE:
+{
+  "score": <integer 0-100, or null if NO_DATA>,
+  "subMetrics": [
+    { "name": "<Sub-metric 1>", "score": <integer or null>, "benchmark": <integer or null> },
+    { "name": "<Sub-metric 2>", "score": <integer or null>, "benchmark": <integer or null> },
+    { "name": "<Sub-metric 3>", "score": <integer or null>, "benchmark": <integer or null> },
+    { "name": "<Sub-metric 4>", "score": <integer or null>, "benchmark": <integer or null> },
+    { "name": "<Sub-metric 5>", "score": <integer or null>, "benchmark": <integer or null> },
+    { "name": "<Sub-metric 6>", "score": <integer or null>, "benchmark": <integer or null> }
+  ],
+  "whatsWorking": ["<observation or 'Data source not available'>"],
+  "criticalGaps": ["<gap or 'Provide the required data source'>"],
+  "whyThisScore": "<explanation, or NO_DATA message>"
+}`;

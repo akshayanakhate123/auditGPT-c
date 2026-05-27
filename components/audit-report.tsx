@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import {
   ArrowDown, ArrowRight, BarChart3, CheckCircle2, ChevronDown, ChevronUp,
-  ExternalLink, RefreshCw, Share2, XCircle,
+  ExternalLink, RefreshCw, Share2, XCircle, AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { Audit } from "@/lib/mock-data";
@@ -292,7 +292,16 @@ export function AuditReport({ audit }: { audit: Audit }) {
     { key: "seo", title: "SEO" },
   ];
 
-  const hasAnyNoData = dimensions.some((d) => getDimStatus(audit, d.key) === "NO_DATA");
+  const missingSources: string[] = [];
+  if (["pdp", "funnel", "retention", "seo"].some((k) => getDimStatus(audit, k as DimKey) === "NO_DATA")) {
+    if (!missingSources.includes("Brand Website")) missingSources.push("Brand Website");
+  }
+  if (getDimStatus(audit, "creative") === "NO_DATA") {
+    missingSources.push("Meta Ad Library");
+  }
+  if (getDimStatus(audit, "social") === "NO_DATA") {
+    missingSources.push("Instagram");
+  }
 
   const competitorData = audit.competitorBenchmark
     .filter((c) => c.brandHealth !== null)
@@ -330,10 +339,23 @@ export function AuditReport({ audit }: { audit: Audit }) {
           <p className="text-sm text-foreground leading-relaxed">
             <span className="font-semibold">Executive Summary:</span> {audit.executiveSummary}
           </p>
-          {hasAnyNoData && (
-            <p className="text-sm text-gray-500 italic mt-2">
-              Some dimensions could not be scored due to unavailable data sources. Scores shown reflect only verified data.
-            </p>
+          {missingSources.length > 0 && (
+            <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
+              <div className="flex gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-semibold text-amber-800">Unavailable Data Sources</h4>
+                  <p className="text-sm text-amber-700 mt-1">
+                    The following sources were not provided or blocked our scraper. Scores shown reflect only verified data.
+                  </p>
+                  <ul className="mt-2 text-sm text-amber-700 list-disc list-inside">
+                    {missingSources.map((s) => (
+                      <li key={s}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
@@ -585,6 +607,32 @@ export function AuditReport({ audit }: { audit: Audit }) {
           </blockquote>
         </div>
       </section>
+
+      {/* Raw Scraped Data (Debug) */}
+      {audit.raw_contexts && (
+        <section className="mt-12 pt-8 border-t border-border">
+          <h2 className="text-lg font-bold text-foreground mb-4">Raw Scraped Data (Debug)</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            This section is only visible during debugging to verify the exact payload retrieved by the scraper before AI analysis.
+          </p>
+          <div className="space-y-6">
+            {(['website', 'meta', 'instagram'] as const).map((source) => (
+              audit.raw_contexts?.[source] && (
+                <div key={source} className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="bg-secondary/50 px-4 py-2 border-b border-border">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">{source} Content</h3>
+                  </div>
+                  <div className="p-4 bg-black">
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap max-h-96 overflow-y-auto">
+                      {audit.raw_contexts[source]}
+                    </pre>
+                  </div>
+                </div>
+              )
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Footer metadata */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 pb-2">

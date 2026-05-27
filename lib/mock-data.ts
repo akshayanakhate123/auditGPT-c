@@ -101,6 +101,11 @@ export interface Audit {
     retention?: "HAS_DATA" | "NO_DATA";
     seo?: "HAS_DATA" | "NO_DATA";
   } | null;
+  raw_contexts?: {
+    website: string | null;
+    meta: string | null;
+    instagram: string | null;
+  } | null;
 }
 
 // ─── Sample Audit 1: Wellness / Strong overall (82) ───────────────────────────

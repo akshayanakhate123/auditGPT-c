@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateAudit, DataAvailability } from "@/lib/groq";
+import { generateAudit, generateDimension, DataAvailability } from "@/lib/groq";
 import { warmUpScraper, scrapeUrl, buildWebsiteContext, ScraperPage } from "@/lib/scraper";
 import { z } from "zod";
 
@@ -129,7 +129,7 @@ export async function POST(
 
     await patchData(
       "website",
-      { output, data_sources: dataAvailability },
+      { output, data_sources: dataAvailability, raw_context: scrapedContext ?? null },
       {
         pdp_score: output.pdp.score,
         funnel_score: output.funnel.score,
@@ -159,19 +159,38 @@ export async function POST(
         ).slice(0, 2000)}`
       : undefined;
 
-    const output = await generateAudit({
-      brandName,
-      brandUrl,
-      category,
-      metaAdLibraryUrl: input.metaAdUrl,
-      scrapedContext,
-      dataAvailability,
-    });
+    let creativeOutput;
+    try {
+      creativeOutput = await generateDimension({
+        brandName,
+        brandUrl,
+        category,
+        metaAdLibraryUrl: input.metaAdUrl,
+        scrapedContext,
+        dataAvailability,
+      }, "creative");
+    } catch (e) {
+      console.error("Meta dimension generation failed:", e);
+      creativeOutput = {
+        score: null,
+        subMetrics: [
+          { name: "Image-to-Video Ratio", score: null, benchmark: null },
+          { name: "Active Ad Count", score: null, benchmark: null },
+          { name: "Creative Refresh Rate", score: null, benchmark: null },
+          { name: "Hook Diversity", score: null, benchmark: null },
+          { name: "UGC Integration", score: null, benchmark: null },
+          { name: "Brand Consistency", score: null, benchmark: null }
+        ],
+        whatsWorking: ["Data source not available or analysis failed"],
+        criticalGaps: ["Provide the required data source to enable analysis"],
+        whyThisScore: "NO_DATA: Analysis failed or data was blocked."
+      };
+    }
 
     await patchData(
       "meta",
-      { creative: output.creative, data_source: metaOk ? "HAS_DATA" : "NO_DATA" },
-      { creative_score: output.creative.score }
+      { creative: creativeOutput, data_source: metaOk ? "HAS_DATA" : "NO_DATA", raw_context: scrapedContext ?? null },
+      { creative_score: creativeOutput.score }
     );
 
     return NextResponse.json({ ok: true });
@@ -196,19 +215,38 @@ export async function POST(
         ).slice(0, 2000)}`
       : undefined;
 
-    const output = await generateAudit({
-      brandName,
-      brandUrl,
-      category,
-      instagramHandle: input.instagramHandle,
-      scrapedContext,
-      dataAvailability,
-    });
+    let socialOutput;
+    try {
+      socialOutput = await generateDimension({
+        brandName,
+        brandUrl,
+        category,
+        instagramHandle: input.instagramHandle,
+        scrapedContext,
+        dataAvailability,
+      }, "social");
+    } catch (e) {
+      console.error("Instagram dimension generation failed:", e);
+      socialOutput = {
+        score: null,
+        subMetrics: [
+          { name: "Follower Count", score: null, benchmark: null },
+          { name: "Post Frequency", score: null, benchmark: null },
+          { name: "Reels Ratio", score: null, benchmark: null },
+          { name: "Avg. Engagement Rate", score: null, benchmark: null },
+          { name: "UGC Volume", score: null, benchmark: null },
+          { name: "Community Response Rate", score: null, benchmark: null }
+        ],
+        whatsWorking: ["Data source not available or analysis failed"],
+        criticalGaps: ["Provide the required data source to enable analysis"],
+        whyThisScore: "NO_DATA: Analysis failed or data was blocked."
+      };
+    }
 
     await patchData(
       "instagram",
-      { social: output.social, data_source: igOk ? "HAS_DATA" : "NO_DATA" },
-      { social_score: output.social.score }
+      { social: socialOutput, data_source: igOk ? "HAS_DATA" : "NO_DATA", raw_context: scrapedContext ?? null },
+      { social_score: socialOutput.score }
     );
 
     return NextResponse.json({ ok: true });

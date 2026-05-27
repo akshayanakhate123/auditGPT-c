@@ -31,6 +31,8 @@ Pricing: Free (1 audit/mo) · Pro ₹999/mo · Agency ₹4,999/mo.
 | PDF export (5-page A4) + download from history | ✅ |
 | Share links | ✅ |
 | Railway scraper (parallel GET calls, 90s retry warm-up) | ✅ |
+| Single-dimension AI generation for auxiliary sections | ✅ |
+| Scraper raw debug context UI on report | ✅ |
 
 ### What's pending (Phase 5)
 1. **End-to-end verification** — Submit a real audit and confirm website section completes
@@ -80,16 +82,17 @@ Sequential POST calls — each awaited before the next starts:
 ### DB storage during processing
 Section outputs are stored in `data.sections.{website|meta|instagram|competitors}` in the
 Supabase `audits.data` JSONB column. Finalize reads these and assembles the final flat structure
-that the report page expects.
+that the report page expects. We also capture `raw_contexts` during each section patch so the 
+UI can render the raw scraper output for debugging.
 
 ---
 
-## Gemini Migration (this session)
+## Gemini Migration & Updates
 
 | | Before | After |
 |---|---|---|
 | SDK | `groq-sdk ^1.2.0` | `@google/generative-ai` |
-| Model | `llama-3.3-70b-versatile` | `gemini-2.5-flash` |
+| Model | `llama-3.3-70b-versatile` | `gemini-flash-latest` (Swapped from 2.5/2.0 due to quota) |
 | Token limit issue | 12k TPM (Groq free tier) | 1M context window — no limit issue |
 | Env var | `GROQ_API_KEY` | `GEMINI_API_KEY` |
 | Output tokens | `max_tokens: 7000` (then 6000) | `maxOutputTokens: 16000` |
@@ -98,10 +101,13 @@ that the report page expects.
 
 ## Things That Failed (this session)
 
-### 1. maxOutputTokens: 6000 caused JSON truncation with Gemini
+### 1. 500 Errors on Scraper Failures
+**Issue:** When the Meta or Instagram scraper hit a login wall or was blocked, it returned an empty or irrelevant payload. Gemini would fail to construct the massive 6-dimension JSON schema out of this missing data, causing Zod to throw a 500 validation error in the route.
+**Fix:** Created a `generateDimension` function that only asks Gemini for the *single* dimension (e.g. `creative` or `social`) using a heavily stripped-down JSON schema (`DimensionSchema`). Added `try/catch` boundaries in the route so that if Gemini fails to output a score (e.g. because it's a login page), it falls back to a safe `NO_DATA` object rather than crashing the route. Added `raw_contexts` blocks to the report UI to make debugging scraper blocks transparent.
+
+### 2. maxOutputTokens: 6000 caused JSON truncation with Gemini
 Gemini's tokenizer packs fewer characters per token than Groq's. The full audit JSON
 exceeded 6000 tokens at ~position 6428, causing `SyntaxError: Unterminated string in JSON`.
-The retry attempt hit the same limit and also failed. The user saw "Unknown error".
 **Fix:** Raised `maxOutputTokens` from 6000 → 16000 in `lib/groq.ts`.
 
 ---
@@ -144,8 +150,8 @@ SCRAPER_API_URL=https://auditgpt-scraper-production.up.railway.app
    POST /api/audit/{id}/finalize 200 in <1s
    ```
 5. Open the audit report — PDP, Funnel, Retention, SEO should show real scores
-6. Creative + Social should show "No data" badges (grey)
-7. Once confirmed, remove the 5 `console.log` statements from section route
+6. Creative + Social should show "No data" banners and UI elements correctly indicating unavailable data
+7. Verify the Raw Scraped Data section at the bottom to check scraper health
 
 ### 2. Seed sample audits to Supabase
 - Write `scripts/seed-samples.ts` that upserts `SAMPLE_AUDITS` from `lib/mock-data.ts`
