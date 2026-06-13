@@ -35,9 +35,10 @@ Pricing: Free (1 audit/mo) · Pro ₹999/mo · Agency ₹4,999/mo.
 | Scraper raw debug context UI on report | ✅ |
 
 ### What's pending (Phase 5)
-1. **End-to-end verification** — Submit a real audit and confirm website section completes
-   cleanly with real scores; remove 5 debug `console.log` calls in
-   `app/api/audit/[id]/section/route.ts`
+1. **End-to-end verification** — ✅ CONFIRMED: website section returns 200 in ~55s with real scores.
+   Remaining: open the report UI and verify PDP/Funnel/Retention/SEO show real scores and
+   Creative/Social show "No data" banners. Then remove 5 debug `console.log` calls in
+   `app/api/audit/[id]/section/route.ts`.
 2. **Seed 6 sample audits to Supabase** — Currently served from `lib/mock-data.ts` as static
    JSON; need a seed script + DB query update in `app/audit/[id]/page.tsx`
 3. **Vercel deployment** — Add all `.env.local` keys as Vercel env vars, update Supabase

@@ -204,6 +204,23 @@ export default async function DashboardPage() {
 
             {/* Sidebar */}
             <div className="space-y-4">
+              <Link
+                href="/scoring-methodology"
+                className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                    How are scores calculated?
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Understand the methodology behind every audit score.
+                  </p>
+                </div>
+              </Link>
+
               <DidYouKnow />
 
               <Card>

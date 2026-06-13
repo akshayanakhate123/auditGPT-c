@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import {
   ArrowDown, ArrowRight, BarChart3, CheckCircle2, ChevronDown, ChevronUp,
-  ExternalLink, RefreshCw, Share2, XCircle, AlertTriangle
+  ExternalLink, Info, RefreshCw, Share2, XCircle, AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { Audit } from "@/lib/mock-data";
@@ -110,7 +110,6 @@ function SubScoreCard({
                 formatter={(v) => [`${v}`, ""]}
                 contentStyle={{ fontSize: 11 }}
               />
-              <Bar dataKey="benchmark" fill="rgb(229 231 235)" radius={[0, 2, 2, 0]} barSize={5} />
               <Bar dataKey="score" radius={[0, 2, 2, 0]} barSize={8}>
                 {chartData.map((entry, i) => (
                   <Cell key={i} fill={scoreColor(entry.score)} />
@@ -118,7 +117,6 @@ function SubScoreCard({
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <p className="text-xs text-muted-foreground text-center mt-1">Bar = score · Grey = category benchmark</p>
         </div>
       ) : (
         <div className="mb-4 bg-gray-50 border border-gray-200 text-gray-600 text-sm p-4 rounded-lg text-center">
@@ -399,7 +397,12 @@ export function AuditReport({ audit }: { audit: Audit }) {
 
       {/* 6 Sub-score cards */}
       <section>
-        <h2 className="text-lg font-bold text-foreground mb-4">Dimension Breakdown</h2>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-lg font-bold text-foreground">Dimension Breakdown</h2>
+          <Link href="/scoring-methodology#dimensions" className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1">
+            <Info className="h-3.5 w-3.5" />How are these scores calculated?
+          </Link>
+        </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {dimensions.map(({ key, title }) => (
             <SubScoreCard
@@ -415,7 +418,12 @@ export function AuditReport({ audit }: { audit: Audit }) {
       {/* Why-Why Analysis */}
       {audit.whyWhyAnalysis.length > 0 && (
         <section>
-          <h2 className="text-lg font-bold text-foreground mb-1">Root Cause Analysis</h2>
+          <div className="flex items-baseline justify-between mb-1">
+            <h2 className="text-lg font-bold text-foreground">Root Cause Analysis</h2>
+            <Link href="/scoring-methodology#root-cause" className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1">
+              <Info className="h-3.5 w-3.5" />How does root cause analysis work?
+            </Link>
+          </div>
           <p className="text-sm text-muted-foreground mb-4">3-level why-why cascade for dimensions scoring below 70</p>
           <div className="space-y-6">
             {audit.whyWhyAnalysis.map((item) => (
@@ -467,7 +475,12 @@ export function AuditReport({ audit }: { audit: Audit }) {
 
       {/* Top 3 Recommendations */}
       <section>
-        <h2 className="text-lg font-bold text-foreground mb-1">Top 3 Growth Recommendations</h2>
+        <div className="flex items-baseline justify-between mb-1">
+          <h2 className="text-lg font-bold text-foreground">Top 3 Growth Recommendations</h2>
+          <Link href="/scoring-methodology#recommendations" className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1">
+            <Info className="h-3.5 w-3.5" />How is ICE prioritization calculated?
+          </Link>
+        </div>
         <p className="text-sm text-muted-foreground mb-4">ICE-prioritised · Impact × Confidence × Ease</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {audit.recommendations.map((rec, i) => (
