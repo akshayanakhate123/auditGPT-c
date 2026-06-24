@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, CheckCircle2, ChevronRight, Lock, Zap, Target, TrendingUp } from "lucide-react";
+import { ArrowRight, BarChart3, ChevronRight, Lock, Zap, Target, TrendingUp } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScoreGauge } from "@/components/score-gauge";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,35 +33,6 @@ const PREVIEW_SCORES = [
   { dimension: "Funnel", score: 56 },
 ];
 
-const PRICING = [
-  {
-    name: "Free",
-    price: "₹0",
-    period: "",
-    highlight: false,
-    features: ["1 audit per month", "3 dimensions only", "Basic recommendations", "7-day report history"],
-    cta: "Start for free",
-    href: "/auth/signup",
-  },
-  {
-    name: "Pro",
-    price: "₹999",
-    period: "/month",
-    highlight: true,
-    features: ["10 audits per month", "All 6 dimensions", "ICE recommendations + templates", "PDF export", "Full history", "Competitor benchmarking"],
-    cta: "Start Pro trial",
-    href: "/auth/signup?plan=pro",
-  },
-  {
-    name: "Agency",
-    price: "₹4,999",
-    period: "/month",
-    highlight: false,
-    features: ["Unlimited audits", "All Pro features", "White-label PDF", "Team seats (5)", "Priority support", "API access"],
-    cta: "Contact us",
-    href: "/auth/signup?plan=agency",
-  },
-];
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -170,56 +140,6 @@ export default async function LandingPage() {
                 </Link>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section className="border-b border-border bg-background py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-foreground sm:text-3xl">Simple, transparent pricing</h2>
-            <p className="mt-3 text-muted-foreground">Start free. Upgrade when you need more audits or dimensions.</p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 max-w-4xl mx-auto">
-            {PRICING.map(({ name, price, period, highlight, features, cta, href }) => (
-              <div
-                key={name}
-                className={`relative rounded-xl border p-6 ${
-                  highlight
-                    ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                    : "border-border bg-card"
-                }`}
-              >
-                {highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge variant="default" className="text-xs">Most popular</Badge>
-                  </div>
-                )}
-                <div className="mb-4">
-                  <h3 className="font-semibold text-foreground">{name}</h3>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-foreground">{price}</span>
-                    <span className="text-sm text-muted-foreground">{period}</span>
-                  </div>
-                </div>
-                <ul className="space-y-2.5 mb-6">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full"
-                  variant={highlight ? "default" : "outline"}
-                  asChild
-                >
-                  <Link href={href}>{cta}</Link>
-                </Button>
-              </div>
-            ))}
           </div>
         </div>
       </section>
